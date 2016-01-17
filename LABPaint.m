@@ -1,18 +1,36 @@
 function LABPaint
-% Herramienta de dibujo  
+% Herramienta de dibujo / Drawing tool
 %
-% ======================================
-% Version: 0.1.1
-% Date: 07/07/2014
-% Author: Jorge De Los Santos
+% Versiones:
+%
+%       - Versión 0.1.0 : * 07/07/2014
+%                         * Versión inicial
+%           
+%       - Versión 0.2.0 : * 16/01/2016
+%                         * Soporte multi-lenguaje (Inglés/Español)
+%
+% =================================
+% LABPaint 0.2.0
+% Author: Pedro Jorge De Los Santos
 % E-mail: delossantosmfq@gmail.com 
-% Blog: http://matlab-typ.blogspot.mx 
-% ======================================
-%
+% Blog: http://labdls.blogspot.mx 
+% =================================
+
+version_ = '0.2.0';
 
 clearvars('-global');
-hF=figure('MenuBar','none','NumberTitle','off',...
-    'Name','LABPaint 0.1','Resize','off',...
+lang = langselect();
+
+if strcmp(lang,'Español')
+    klang = 1; 
+else
+    klang = 2; % English default
+end
+
+hF=figure('MenuBar','none',...
+    'NumberTitle','off',...
+    'Name',['LABPaint ',version_],...
+    'Resize','off',...
     'Position',[200 200 600 400]);
 centerfig();
 
@@ -22,49 +40,69 @@ dim=get(hF,'Position');
 xL=[0 dim(3)];
 yL=[0 dim(4)];
 
+labels = struct('file',{'Archivo','File'},...
+                'save',{'Guardar','Save'},...
+                'exit',{'Salir','Exit'},...
+                'selectTool',{'Seleccionar herramienta','Select tool'},...
+                'pencil',{'Lápiz','Pencil'},...
+                'rectangle',{'Rectángulo','Rectangle'},...
+                'circle',{'Círculo','Circle'},...
+                'polyline',{'Polilínea','Polyline'},...
+                'spray',{'Aerógrafo','Spray'},...
+                'text',{'Texto','Text'},...
+                'clearLine',{'Borrar linea','Clear line'},...
+                'clearCanvas',{'Limpiar lienzo','Clear canvas'},...
+                'selectColor',{'Seleccionar color','Select color'},...
+                'backgroundColor',{'Color de fondo','Background color'},...
+                'width',{'Grosor','Width'},...
+                'help',{'Ayuda','Help'},...
+                'about',{'Acerca de...','About...'},...
+                'magicCanvas',{'Lienzo mágico','Magic canvas'});
+
 % Menú Archivo
-hmArch=uimenu(hF,'Label','Archivo');
-uimenu(hmArch,'Label','Guardar','Callback',@guardarImg);
+hmArch=uimenu(hF,'Label',labels(klang).file);
+uimenu(hmArch,'Label',labels(klang).save,'Callback',@guardarImg);
 % uimenu(hmArch,'Label','Abrir imagen','Callback',@abrirImg);
-uimenu(hmArch,'Label','Salir','Callback','close(gcf)');
+uimenu(hmArch,'Label',labels(klang).exit,'Callback','close(gcf)');
 
 % Menú Seleccionar herramienta
-hSH=uimenu(hF,'Label','Seleccionar herramienta');
-uimenu(hSH,'Label','Lápiz','Callback',@dmodo,'Checked','on');
-uimenu(hSH,'Label','Rectángulo','Callback',@dmodo);
-uimenu(hSH,'Label','Círculo','Callback',@dmodo);
-uimenu(hSH,'Label','Polilínea','Callback',@dmodo);
-uimenu(hSH,'Label','Aerógrafo','Callback',@dmodo);
-uimenu(hSH,'Label','Texto','Callback',@dmodo);
-uimenu(hSH,'Label','Borrar linea','Callback',@borraLinea,'Separator','on');
-uimenu(hSH,'Label','Borrar lienzo',...
+hSH=uimenu(hF,'Label',labels(klang).selectTool);
+uimenu(hSH,'Label',labels(klang).pencil,'Callback',@dmodo,'Checked','on');
+uimenu(hSH,'Label',labels(klang).rectangle,'Callback',@dmodo);
+uimenu(hSH,'Label',labels(klang).circle,'Callback',@dmodo);
+uimenu(hSH,'Label',labels(klang).polyline,'Callback',@dmodo);
+uimenu(hSH,'Label',labels(klang).spray,'Callback',@dmodo);
+uimenu(hSH,'Label',labels(klang).text,'Callback',@dmodo);
+uimenu(hSH,'Label',labels(klang).clearLine,'Callback',@borraLinea,'Separator','on');
+uimenu(hSH,'Label',labels(klang).clearCanvas,...
     'Callback','cla(gca,''reset'');delete(findobj(''type'',''hggroup''));');
 
 % Menú Color
-hSC=uimenu(hF,'Label','Seleccionar color');
-uimenu(hSC,'Label','Seleccionar color','Callback',@scolor);
-uimenu(hSC,'Label','Color de fondo','Callback',@lienzoColor);
+hSC=uimenu(hF,'Label',labels(klang).selectColor);
+uimenu(hSC,'Label',labels(klang).selectColor,'Callback',@scolor);
+uimenu(hSC,'Label',labels(klang).backgroundColor,'Callback',@lienzoColor);
 
 % Menú Grosor
-hSG=uimenu(hF,'Label','Grosor');
+hSG=uimenu(hF,'Label',labels(klang).width);
 uimenu(hSG,'Label','1','checked','on');
 uimenu(hSG,'Label','2');
 uimenu(hSG,'Label','3');
 uimenu(hSG,'Label','4');
+uimenu(hSG,'Label','6');
+uimenu(hSG,'Label','10');
 set(findobj('Parent',hSG),'Callback',@sgrosor);
 
 % Menú Ayuda
-hMA=uimenu(hF,'Label','Ayuda');
-uimenu(hMA,'Label','Ayuda','Callback',@ayuda);
-uimenu(hMA,'Label','Acerca de...','Callback',@acerca);
+hMA=uimenu(hF,'Label',labels(klang).help);
+uimenu(hMA,'Label',labels(klang).help,'Callback',@ayuda);
+uimenu(hMA,'Label',labels(klang).about,'Callback',@acerca);
 
 % Menú Contextual -> Axes & Surface 
 hMCTX=uicontextmenu();
-uimenu(hMCTX,'Label','Limpiar lienzo','Callback','cla(gca,''reset'')');
-uimenu(hMCTX,'Label','Color del lienzo','Callback',@lienzoColor);
-uimenu(hMCTX,'Label','Lienzo mágico','Callback',@lienzomagFcn);
+uimenu(hMCTX,'Label',labels(klang).clearCanvas,'Callback','cla(gca,''reset'')');
+uimenu(hMCTX,'Label',labels(klang).backgroundColor,'Callback',@lienzoColor);
+uimenu(hMCTX,'Label',labels(klang).magicCanvas,'Callback',@lienzomagFcn);
 set(gca,'uicontextmenu',hMCTX);
-
 
 % ========================== FUNCIONES ==================================
 
@@ -88,17 +126,17 @@ set(gca,'uicontextmenu',hMCTX);
         set(hF,'WindowButtonDownFcn',''); % 'Desactivar' eventos para evitar conflictos.
         set(hF,'WindowButtonMotionFcn','');
         set(hF,'WindowButtonUpFcn','');
-        if strcmpi(tipo,'Lápiz')
+        if strcmpi(tipo,'Lápiz') || strcmpi(tipo,'Pencil')
             set(hF,'WindowButtonDownFcn',{@lapizFcn,clr,grs});
-        elseif strcmpi(tipo,'Rectángulo')
+        elseif strcmpi(tipo,'Rectángulo') || strcmpi(tipo,'Rectangle')
             set(hF,'WindowButtonDownFcn',{@rectanguloFcn,clr,grs});
-        elseif strcmpi(tipo,'Círculo')
+        elseif strcmpi(tipo,'Círculo') || strcmpi(tipo,'Circle')
             set(hF,'WindowButtonDownFcn',{@circuloFcn,clr,grs});
-        elseif strcmpi(tipo,'Polilínea')
+        elseif strcmpi(tipo,'Polilínea') || strcmpi(tipo,'Polyline')
             set(hF,'WindowButtonDownFcn',{@polilineaFcn,clr,grs});
-        elseif strcmpi(tipo,'Aerógrafo')
+        elseif strcmpi(tipo,'Aerógrafo') || strcmpi(tipo,'Spray')
             set(hF,'WindowButtonDownFcn',{@aerografoFcn,clr,grs});
-        elseif strcmpi(tipo,'Texto')
+        elseif strcmpi(tipo,'Texto') || strcmpi(tipo,'Text')
             set(hF,'WindowButtonDownFcn',{@textoFcn,clr});
         else
             % Pass: Por definir 
@@ -249,7 +287,7 @@ set(gca,'uicontextmenu',hMCTX);
         map2=repmat(gray(3)*0.8,8,1); % Escala de grises 'modificada'
         map3=repmat([1 1 0;0 1 1;1 0 1;1 0 0;0 1 0;0 0 1],8,1); % Franjas de colores
         %  =============================================================================
-        [xx,yy]=meshgrid(linspace(0,10,xL(2)),linspace(0,10,yL(2)));
+        [xx,yy]=meshgrid(linspace(0,10,xL(2)),linspace(0,10,yL(2))); %#ok
         clrmaps={'hsv','hot','jet','cool','winter',...
             'summer','autumn',map1,map2,map3};
         funs={'xx+yy','sin(xx)+cos(yy)','xx.^2+yy.^2','xx./(yy+10)',...
@@ -319,10 +357,10 @@ set(gca,'uicontextmenu',hMCTX);
             'Name','Acerca de...','Resize','off',...
             'Position',[0 0 200 100],'color','w');
         centerfig();
-        devel='Por: Jorge De Los Santos';
+        devel='Por: Pedro Jorge De Los Santos';
         e_mail='E-mail: delossantosmfq@gmail.com';
-        blog='Blog: http://matlab-typ.blogspot.mx';
-        nvrs='LABPaint 0.1.1';
+        blog='Blog: http://labdls.blogspot.mx'; %% Changed from matlab-typ to labdls
+        nvrs=['LABPaint ',version_];
         uicontrol('style','text','String',devel,...
             'Units','Normalized','Position',[0.1 0.80 0.8 0.15],...
             'FontName','Arial Narrow','FontSize',10,...
@@ -336,5 +374,47 @@ set(gca,'uicontextmenu',hMCTX);
             'FontName','Courier','FontSize',10,'FontWeight','b',...
             'ForegroundColor',[0 0 0.5]);
         set(findobj('style','text'),'BackgroundColor','w');
+    end
+
+%% LangSelect Aux Function
+    function sel = langselect()
+        options = {'English','Español'};
+        str = {'Seleccione un idioma','Select language'};
+        
+        hFLS=figure('MenuBar','none',...
+            'NumberTitle','off',...
+            'Name','LABPaint 0.2.0',...
+            'Resize','off',...
+            'Color','w',...
+            'Position',[200 200 200 100]);
+        centerfig();
+        
+        uicontrol(hFLS,'style','text',...
+            'String',str,...
+            'BackG','w',...
+            'Position',[0 60 200 40]);
+        
+        hPU = uicontrol(hFLS,'style','popup',...
+            'String',options,...
+            'Position',[20 40 160 20],...
+            'FontSize',9,...
+            'BackG','w',...
+            'Horizontal','center');
+        
+        uicontrol(hFLS,'style','push',...
+            'String','OK',...
+            'Position',[60 5 80 20],...
+            'BackG',[0.9,0.8,0.7],...
+            'FontW','b',...
+            'Callback',@optselect);
+        
+        uiwait(hFLS);
+        
+        function optselect(~,~)
+            all_str = get(hPU,'String');
+            k = get(hPU,'Value');
+            sel = all_str{k};
+            delete(hFLS);
+        end
     end
 end
